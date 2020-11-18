@@ -1,0 +1,15 @@
+body {
+  font-family: "Roboto Mono", "Inconsolata", monospace;
+}
+
+main {
+  width: 640px;
+  margin: auto;
+}
+
+input.formula {
+  border: none;
+  border-bottom: 2px solid black;
+  font-family: inherit;
+  font-size: inherit;
+}
