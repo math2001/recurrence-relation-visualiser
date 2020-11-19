@@ -7,6 +7,7 @@ enum TokenType {
   variable,
   operator,
   number,
+  bracket,
 }
 
 interface Token {
@@ -110,17 +111,17 @@ function tokenize(expression: string): Token[] {
         type: TokenType.variable,
         value: buf.join(""),
       });
+    } else if (char === "(" || char === ")") {
+      tokens.push({
+        type: TokenType.bracket,
+        value: char,
+      });
+    } else if (char !== " ") {
+      console.error(char);
+      throw new Error("invalid char");
     }
   }
   return tokens;
-}
-
-function nud(tokenstream: Stream<Token>): ENode | Leaf {
-  const token = tokenstream.consume();
-  if (token.type === TokenType.number || token.type === TokenType.variable) {
-    return token.value;
-  }
-  throw new Error("invalid token type");
 }
 
 function parse(tokens: Token[]): ENode | Leaf {
@@ -133,16 +134,41 @@ function _parse(tokenstream: Stream<Token>, precedence: number): ENode | Leaf {
   let next;
   while (!tokenstream.eof()) {
     next = tokenstream.peek();
-    if (next.type !== TokenType.operator) throw new Error();
-    if (getPrecedence(next.value as string) <= precedence) break;
-    tokenstream.consume();
-    left = {
-      left: left,
-      operator: next.value as string,
-      right: _parse(tokenstream, getPrecedence(next.value as string)),
-    };
+    if (next.type === TokenType.operator) {
+      if (getPrecedence(next.value as string) <= precedence) break;
+      tokenstream.consume();
+      left = {
+        left: left,
+        operator: next.value as string,
+        right: _parse(tokenstream, getPrecedence(next.value as string)),
+      };
+    } else if (
+      tokenstream.peek().type === TokenType.bracket &&
+      tokenstream.peek().value === ")"
+    ) {
+      break;
+    } else {
+      console.error(next);
+      throw new Error();
+    }
   }
   return left;
+}
+
+function nud(tokenstream: Stream<Token>): ENode | Leaf {
+  const token = tokenstream.consume();
+  if (token.type === TokenType.number || token.type === TokenType.variable) {
+    return token.value;
+  }
+  if (token.type === TokenType.bracket && token.value === "(") {
+    const node = _parse(tokenstream, 0);
+    const close = tokenstream.consume();
+    if (close.type !== TokenType.bracket || close.value !== ")")
+      throw new Error();
+    return node;
+  }
+  console.error(token.value, TokenType[token.type]);
+  throw new Error("invalid token type");
 }
 
 function getPrecedence(operator: string): number {
