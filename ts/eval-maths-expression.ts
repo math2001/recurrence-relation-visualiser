@@ -107,6 +107,14 @@ function tokenize(expression: string): Token[] {
       while (!charStream.eof() && isalphanum(charStream.peek())) {
         buf.push(charStream.consume());
       }
+      if (!charStream.eof() && charStream.peek() === "[") {
+        while (!charStream.eof() && buf[buf.length - 1] !== "]") {
+          buf.push(charStream.consume());
+        }
+        if (buf[buf.length - 1] !== "]") {
+          throw new Error("missing closing ]");
+        }
+      }
       tokens.push({
         type: TokenType.variable,
         value: buf.join(""),
@@ -115,17 +123,6 @@ function tokenize(expression: string): Token[] {
       tokens.push({
         type: TokenType.bracket,
         value: char,
-      });
-    } else if (char === "{") {
-      const buf: string[] = [];
-      let char = "{";
-      while (!charStream.eof() && charStream.peek() !== "}") {
-        buf.push(charStream.consume());
-      }
-      charStream.consume(); // consume the }
-      tokens.push({
-        type: TokenType.variable,
-        value: buf.join(""),
       });
     } else if (char !== " ") {
       console.error(char);

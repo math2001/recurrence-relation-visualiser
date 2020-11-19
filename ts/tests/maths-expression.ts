@@ -21,8 +21,7 @@ function testMathsExpressionsNumbers() {
 function testMathsExpressionsVariables() {
   let table: [string, { [key: string]: number }, number][] = [
     ["a+b", { a: 1, b: 2 }, 3],
-    ["{a}+{b}", { a: 1, b: 2 }, 3],
-    ["{a n-1} + {a n-2}", { "a n-1": 2, "a n-2": 3 }, 5],
+    ["a[n]+a[i]", { "a[n]": 2, "a[i]": 3 }, 5],
   ];
   for (let row of table) {
     const expr = compileMathsExpression(row[0]);
