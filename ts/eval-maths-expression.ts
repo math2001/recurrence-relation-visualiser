@@ -22,21 +22,61 @@ interface ENode {
   operator: string;
 }
 
-function evalMathsExpression(expression: string): Formula {
-  // I don't what is the best way to get typescript to see that a string can
-  // also be considered an array of strings (characters)
-  const tokenstream = tokenize(new Stream((expression as unknown) as string[]));
-  const tree = parse(tokenstream);
-  console.log(tree);
+function compileMathsExpression(expression: string): Formula {
+  const tokens = tokenize(expression);
+  const variables = extractVariables(tokens);
+  const tree = parse(tokens);
+  const _eval = (
+    node: ENode | Leaf,
+    vars: { [key: string]: number }
+  ): number => {
+    if (typeof node === "number") {
+      return node;
+    }
+    if (typeof node === "string") {
+      return vars[node];
+    }
+
+    if (node.operator === "+") {
+      return _eval(node.left, vars) + _eval(node.right, vars);
+    }
+    if (node.operator === "-") {
+      return _eval(node.left, vars) - _eval(node.right, vars);
+    }
+    if (node.operator === "*") {
+      return _eval(node.left, vars) * _eval(node.right, vars);
+    }
+    if (node.operator === "/") {
+      return _eval(node.left, vars) / _eval(node.right, vars);
+    }
+
+    console.error(node);
+    throw new Error("invalid node");
+  };
   return {
     eval: function (vars: { [key: string]: number }): number {
-      return 0;
+      // ensure we have all the variables
+      const foundVars = Array.from(variables);
+      for (let name in vars) {
+        const index = foundVars.indexOf(name);
+        if (index < 0) throw new Error(`Unknown variable ${name}`);
+        foundVars.splice(index, 1);
+      }
+      if (foundVars.length > 0) {
+        console.error(foundVars);
+        throw new Error("missing variables");
+      }
+      return _eval(tree, vars);
     },
-    requiredVariables: [],
+    requiredVariables: variables,
   };
 }
 
-function tokenize(charStream: Stream<string>): Stream<Token> {
+function tokenize(expression: string): Token[] {
+  // I don't what is the best way to get typescript to see that a string can
+  // also be considered an array of strings (characters)
+  const charStream = new Stream<string>((expression as unknown) as string[]);
+
   const tokens: Token[] = [];
   while (!charStream.eof()) {
     const char = charStream.consume();
@@ -72,7 +112,7 @@ function tokenize(charStream: Stream<string>): Stream<Token> {
       });
     }
   }
-  return new Stream<Token>(tokens);
+  return tokens;
 }
 
 function nud(tokenstream: Stream<Token>): ENode | Leaf {
@@ -83,10 +123,11 @@ function nud(tokenstream: Stream<Token>): ENode | Leaf {
   throw new Error("invalid token type");
 }
 
-function parse(
-  tokenstream: Stream<Token>,
-  precedence: number = 0
-): ENode | Leaf {
+function parse(tokens: Token[]): ENode | Leaf {
+  return _parse(new Stream<Token>(tokens), 0);
+}
+
+function _parse(tokenstream: Stream<Token>, precedence: number): ENode | Leaf {
   let left = nud(tokenstream);
 
   let next;
@@ -98,7 +139,7 @@ function parse(
     left = {
       left: left,
       operator: next.value as string,
-      right: parse(tokenstream, getPrecedence(next.value as string)),
+      right: _parse(tokenstream, getPrecedence(next.value as string)),
     };
   }
   return left;
@@ -115,6 +156,16 @@ function getPrecedence(operator: string): number {
     return 21;
   }
   throw new Error(`unknown operator ${operator}`);
+}
+
+function extractVariables(tokens: Token[]): string[] {
+  const variables: string[] = [];
+  for (let token of tokens) {
+    if (token.type === TokenType.variable) {
+      variables.push(token.value as string);
+    }
+  }
+  return variables;
 }
 
 function isdigit(char: string) {
