@@ -1,9 +1,9 @@
-function testMathsExpressions() {
-  const table: [string, number][] = [
-    // ["1+2*3", 7],
-    // ["2*3+4", 10],
-    // ["1+2+3+4", 10],
-    // ["4*3*2+3", 27],
+function testMathsExpressionsNumbers() {
+  let table: [string, number][] = [
+    ["1+2*3", 7],
+    ["2*3+4", 10],
+    ["1+2+3+4", 10],
+    ["4*3*2+3", 27],
     ["(1 + 2) * 3", 9],
     ["(((1 + 2))) * 3", 9],
     ["3 * (2 + 4)", 18],
@@ -17,7 +17,24 @@ function testMathsExpressions() {
       throw new Error("fail");
     }
   }
-  console.log("tests passed!");
+}
+function testMathsExpressionsVariables() {
+  let table: [string, { [key: string]: number }, number][] = [
+    ["a+b", { a: 1, b: 2 }, 3],
+    ["{a}+{b}", { a: 1, b: 2 }, 3],
+    ["{a n-1} + {a n-2}", { "a n-1": 2, "a n-2": 3 }, 5],
+  ];
+  for (let row of table) {
+    const expr = compileMathsExpression(row[0]);
+    const actual = expr.eval(row[1]);
+    if (actual != row[2]) {
+      console.error(expr);
+      console.error("actual", actual, "expected", row[1]);
+      throw new Error("fail");
+    }
+  }
 }
 
-testMathsExpressions();
+testMathsExpressionsNumbers();
+testMathsExpressionsVariables();
+console.log("tests passed");

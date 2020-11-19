@@ -116,6 +116,17 @@ function tokenize(expression: string): Token[] {
         type: TokenType.bracket,
         value: char,
       });
+    } else if (char === "{") {
+      const buf: string[] = [];
+      let char = "{";
+      while (!charStream.eof() && charStream.peek() !== "}") {
+        buf.push(charStream.consume());
+      }
+      charStream.consume(); // consume the }
+      tokens.push({
+        type: TokenType.variable,
+        value: buf.join(""),
+      });
     } else if (char !== " ") {
       console.error(char);
       throw new Error("invalid char");
