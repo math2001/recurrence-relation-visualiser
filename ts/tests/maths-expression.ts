@@ -37,4 +37,4 @@ function testMathsExpressionsVariables() {
 
 testMathsExpressionsNumbers();
 testMathsExpressionsVariables();
-console.log("tests passed");
+console.info("tests passed");

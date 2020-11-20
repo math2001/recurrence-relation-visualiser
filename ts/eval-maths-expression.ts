@@ -1,6 +1,6 @@
 interface Formula {
   eval: (vars: { [key: string]: number }) => number;
-  vars: string[];
+  vars: Set<string>;
 }
 
 enum TokenType {
@@ -192,11 +192,11 @@ function getPrecedence(operator: string): number {
   throw new Error(`unknown operator ${operator}`);
 }
 
-function extractVariables(tokens: Token[]): string[] {
-  const variables: string[] = [];
+function extractVariables(tokens: Token[]): Set<string> {
+  const variables: Set<string> = new Set();
   for (let token of tokens) {
     if (token.type === TokenType.variable) {
-      variables.push(token.value as string);
+      variables.add(token.value as string);
     }
   }
   return variables;

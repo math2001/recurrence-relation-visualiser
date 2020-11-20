@@ -36,12 +36,12 @@ document.addEventListener("DOMContentLoaded", () => {
       icBox,
       icElements,
       parseInt(icStartIndexInput.value),
-      expr.vars.length
+      expr.vars.size
     );
 
     const startIndex = parseInt(icStartIndexInput.value);
     const cache: number[] = [];
-    for (let i = 0; i < expr.vars.length; i++) {
+    for (let i = 0; i < expr.vars.size; i++) {
       cache[i] = parseInt(
         getElement<HTMLInputElement>("input", icElements[i]).value
       );
@@ -52,9 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const cacheIndex = x - startIndex;
       for (let j = cache.length; j <= cacheIndex; j++) {
-        cache[cacheIndex] = expr.eval(
-          toObjOfVariables(cache, expr.vars.length)
-        );
+        cache[cacheIndex] = expr.eval(toObjOfVariables(cache, expr.vars.size));
       }
       return cache[cacheIndex];
     };
@@ -77,15 +75,15 @@ document.addEventListener("DOMContentLoaded", () => {
   updateDynamicElements();
 });
 
-function validateUsedVariables(variables: string[]) {
-  for (let i = 0; i < variables.length; i++) {
-    if (variables[i].startsWith("a[n-") && variables[i].endsWith("]")) {
-      const index = parseInt(variables[i].slice("a[n-".length, -1), 10);
-      if (index > 0 && index <= variables.length) {
+function validateUsedVariables(variables: Set<string>) {
+  for (let variable of variables) {
+    if (variable.startsWith("a[n-") && variable.endsWith("]")) {
+      const index = parseInt(variable.slice("a[n-".length, -1), 10);
+      if (index > 0 && index <= variables.size) {
         continue;
       }
     }
-    console.error(variables[i]);
+    console.error(variable);
     throw new Error("invalid variable");
   }
 }
