@@ -12,13 +12,14 @@ const Zero = { x: 0, y: 0 };
 
 class Plot {
   canvas: HTMLCanvasElement;
-  scale: Point;
+  zoom: number;
+  scale: MPoint;
   origin: MPoint;
   context: CanvasRenderingContext2D;
   func: ((x: number) => number | null) | null;
   pressdown: Point | null;
 
-  constructor(canvas: HTMLCanvasElement, unitaryOrigin: Point, scale: Point) {
+  constructor(canvas: HTMLCanvasElement, unitaryOrigin: Point, zoom: number) {
     this.func = null;
     this.pressdown = null;
 
@@ -27,9 +28,9 @@ class Plot {
     if (context === null) throw new Error("null context for canvas");
     this.context = context;
 
-    this.scale = scale;
-    if (this.scale.x <= 0 || this.scale.y <= 0)
-      throw new Error("null or negative scale");
+    this.zoom = zoom;
+    this.scale = { x: 1, y: 1 };
+    this._computeScale();
 
     this.origin = {
       x: (unitaryOrigin.x * canvas.width) / 2 + canvas.width / 2,
@@ -57,6 +58,14 @@ class Plot {
       if (this.pressdown !== null) {
         this.pressdown = null;
       }
+    });
+
+    this.canvas.addEventListener("wheel", (e) => {
+      if (e.deltaY > 0) this.zoom--;
+      else if (e.deltaY < 0) this.zoom++;
+      else return;
+      this._computeScale();
+      this.render();
     });
   }
 
@@ -132,5 +141,10 @@ class Plot {
         this.origin.y + y * this.scale.y
       );
     }
+  }
+
+  _computeScale() {
+    this.scale.x = Math.round(Math.pow(1.2, this.zoom));
+    this.scale.y = Math.round(Math.pow(1.2, this.zoom));
   }
 }

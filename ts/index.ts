@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const icBox = getElement<HTMLElement>("#initial-conditions");
   const icElements: HTMLElement[] = [];
 
-  const plot = new Plot(canvas, origin, scale);
+  const plot = new Plot(canvas, origin, 10);
   plot.func = (x) => (x * x * x) / 30;
   plot.render();
 
