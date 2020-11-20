@@ -1,5 +1,19 @@
+* {
+  box-sizing: border-box;
+}
+
 body {
   font-family: "Roboto Mono", "Inconsolata", monospace;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
 }
 
 main {
@@ -7,11 +21,19 @@ main {
   margin: auto;
 }
 
-input.formula {
+input {
   border: none;
   border-bottom: 2px solid black;
+}
+
+input.formula {
   font-family: inherit;
   font-size: inherit;
+}
+
+.initial-conditions input[type="number"],
+.initial-conditions-start-index {
+  width: 64px;
 }
 
 .box-formula {
