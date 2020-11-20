@@ -1,0 +1,12 @@
+- [ ] support zooming
+    - [ ] zoom with mousewheel
+    - [ ] axis independent zooming
+- [ ] report errors on the webpage
+    - [ ] raise MathsExpressionError where sensible
+- [ ] better user interface for "Start index"
+- [ ] support n in the expression
+- [ ] draw lines between points
+- [ ] plot interface basic utils
+    - [ ] draw grid
+    - [ ] home button
+    - [ ] "unzoom to see entire intersting part" // look at change in y/change in x
