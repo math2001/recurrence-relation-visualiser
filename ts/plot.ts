@@ -72,7 +72,7 @@ class Plot {
 
     const radius = 4;
     this.context.fillStyle = "#2c3e50";
-    for (let x = left; x < right; x++) {
+    for (let x = left; x <= right; x++) {
       this.context.beginPath();
       const y = this.func(x);
       if (y === null) continue;
