@@ -7,13 +7,16 @@ function testMathsExpressionsNumbers() {
     ["(1 + 2) * 3", 9],
     ["(((1 + 2))) * 3", 9],
     ["3 * (2 + 4)", 18],
+    ["2^(3^2)", 512],
+    ["(2^3)^2", 64],
+    ["2^3^2", 512],
   ];
   for (let row of table) {
     const expr = compileMathsExpression(row[0]);
     const actual = expr.eval({});
     if (actual != row[1]) {
       console.error(expr);
-      console.error("actual", actual, "expected", row[1]);
+      console.error(row[0], "actual", actual, "expected", row[1]);
       throw new Error("fail");
     }
   }

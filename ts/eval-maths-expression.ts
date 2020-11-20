@@ -41,19 +41,27 @@ function compileMathsExpression(expression: string): Formula {
     if (node.operator === "+") {
       return _eval(node.left, vars) + _eval(node.right, vars);
     }
+
     if (node.operator === "-") {
       return _eval(node.left, vars) - _eval(node.right, vars);
     }
+
     if (node.operator === "*") {
       return _eval(node.left, vars) * _eval(node.right, vars);
     }
+
     if (node.operator === "/") {
       return _eval(node.left, vars) / _eval(node.right, vars);
+    }
+
+    if (node.operator === "^") {
+      return Math.pow(_eval(node.left, vars), _eval(node.right, vars));
     }
 
     console.error(node);
     throw new Error("invalid node");
   };
+
   return {
     eval: function (vars: { [key: string]: number }): number {
       // ensure we have all the variables
@@ -148,7 +156,7 @@ function _parse(tokenstream: Stream<Token>, precedence: number): ENode | Leaf {
       left = {
         left: left,
         operator: next.value as string,
-        right: _parse(tokenstream, getPrecedence(next.value as string)),
+        right: _parse(tokenstream, getPrecedence(next.value as string, true)),
       };
     } else if (
       tokenstream.peek().type === TokenType.bracket &&
@@ -179,7 +187,10 @@ function nud(tokenstream: Stream<Token>): ENode | Leaf {
   throw new Error("invalid token type");
 }
 
-function getPrecedence(operator: string): number {
+function getPrecedence(
+  operator: string,
+  subOneFromRightBoundingOperator: boolean = false
+): number {
   if (operator === "+" || operator === "-") {
     return 1;
   }
@@ -187,7 +198,7 @@ function getPrecedence(operator: string): number {
     return 11;
   }
   if (operator === "^") {
-    return 21;
+    return 21 - (subOneFromRightBoundingOperator ? 1 : 0);
   }
   throw new Error(`unknown operator ${operator}`);
 }
