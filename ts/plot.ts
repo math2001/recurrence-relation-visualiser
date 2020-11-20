@@ -8,11 +8,16 @@ interface MPoint {
   y: number;
 }
 
+enum Axis {
+  vertical,
+  horizontal,
+}
+
 const Zero = { x: 0, y: 0 };
 
 class Plot {
   canvas: HTMLCanvasElement;
-  zoom: number;
+  zoom: MPoint;
   scale: MPoint;
   origin: MPoint;
   context: CanvasRenderingContext2D;
@@ -20,7 +25,7 @@ class Plot {
   pressdown: Point | null;
   measures: TextMetrics;
 
-  constructor(canvas: HTMLCanvasElement, unitaryOrigin: Point, zoom: number) {
+  constructor(canvas: HTMLCanvasElement, unitaryOrigin: Point, zoom: MPoint) {
     this.func = null;
     this.pressdown = null;
 
@@ -64,9 +69,15 @@ class Plot {
     });
 
     this.canvas.addEventListener("wheel", (e) => {
-      if (e.deltaY > 0) this.zoom--;
-      else if (e.deltaY < 0) this.zoom++;
-      else return;
+      if (e.deltaY === 0) return;
+      if (e.shiftKey && this._highlightingAxis(e, Axis.vertical)) {
+        this.zoom.y -= e.deltaY / Math.abs(e.deltaY);
+      } else if (e.shiftKey && this._highlightingAxis(e, Axis.horizontal)) {
+        this.zoom.x -= e.deltaY / Math.abs(e.deltaY);
+      } else {
+        this.zoom.y -= e.deltaY / Math.abs(e.deltaY);
+        this.zoom.x -= e.deltaY / Math.abs(e.deltaY);
+      }
       this._computeScale();
       this.render();
     });
@@ -174,8 +185,19 @@ class Plot {
   }
 
   _computeScale() {
-    this.scale.x = Math.pow(1.2, this.zoom);
-    this.scale.y = Math.pow(1.2, this.zoom);
+    this.scale.x = Math.pow(1.2, this.zoom.x);
+    this.scale.y = Math.pow(1.2, this.zoom.y);
+  }
+
+  _highlightingAxis(e: MouseEvent, axis: Axis): boolean {
+    const highlightingDistance = 20;
+    if (axis === Axis.horizontal) {
+      return Math.abs(e.offsetY - this.origin.y) < highlightingDistance;
+    }
+    if (axis === Axis.vertical) {
+      return Math.abs(e.offsetX - this.origin.x) < highlightingDistance;
+    }
+    throw new Error("invalid axis");
   }
 }
 
