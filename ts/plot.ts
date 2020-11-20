@@ -18,6 +18,7 @@ class Plot {
   context: CanvasRenderingContext2D;
   func: ((x: number) => number | null) | null;
   pressdown: Point | null;
+  measures: TextMetrics;
 
   constructor(canvas: HTMLCanvasElement, unitaryOrigin: Point, zoom: number) {
     this.func = null;
@@ -27,6 +28,8 @@ class Plot {
     const context = this.canvas.getContext("2d");
     if (context === null) throw new Error("null context for canvas");
     this.context = context;
+
+    this.measures = this.context.measureText("A");
 
     this.zoom = zoom;
     this.scale = { x: 1, y: 1 };
@@ -124,7 +127,16 @@ class Plot {
     this.context.font = "12px Roboto Mono";
     this.context.textAlign = "center";
 
+    const tickWidth =
+      this.measures.width *
+      max(left.toString().length, right.toString().length);
+    let markEvery = Math.floor((3 * tickWidth) / this.scale.x) || 1;
+    if (markEvery > 5) {
+      markEvery = Math.round(markEvery / 5) * 5;
+    }
+
     for (let x = left; x <= right; x++) {
+      if (x % markEvery != 0) continue;
       this.context.fillText(
         `${x}`,
         this.origin.x + x * this.scale.x,
@@ -132,9 +144,18 @@ class Plot {
       );
     }
 
+    const tickHeight =
+      this.measures.actualBoundingBoxAscent +
+      this.measures.actualBoundingBoxDescent;
+
+    markEvery = Math.floor((8 * tickHeight) / this.scale.y) || 1;
+    if (markEvery > 5) {
+      markEvery = Math.round(markEvery / 5) * 5;
+    }
     this.context.textAlign = "right";
     this.context.textBaseline = "middle";
     for (let y = top; y <= bottom; y++) {
+      if (y % markEvery != 0) continue;
       this.context.fillText(
         `${-y}`,
         this.origin.x - 4,
@@ -144,7 +165,15 @@ class Plot {
   }
 
   _computeScale() {
-    this.scale.x = Math.round(Math.pow(1.2, this.zoom));
-    this.scale.y = Math.round(Math.pow(1.2, this.zoom));
+    this.scale.x = Math.pow(1.2, this.zoom);
+    this.scale.y = Math.pow(1.2, this.zoom);
   }
+}
+
+function max(...nums: number[]): number {
+  let max = nums[0];
+  for (let num of nums) {
+    if (num > max) max = num;
+  }
+  return max;
 }
