@@ -3,7 +3,12 @@ interface Point {
   readonly y: number;
 }
 
-function plot(
+interface MPoint {
+  x: number;
+  y: number;
+}
+
+function initiatePlot(
   canvas: HTMLCanvasElement,
   unitaryorigin: Point,
   scale: Point,
@@ -14,7 +19,7 @@ function plot(
     throw new Error("no context");
   }
 
-  const origin = {
+  const origin: MPoint = {
     x: (unitaryorigin.x * canvas.width) / 2 + canvas.width / 2,
     y: (unitaryorigin.y * canvas.height) / 2 + canvas.height / 2,
   };
@@ -23,20 +28,43 @@ function plot(
     throw new Error("negative scale");
   }
 
-  renderAxis(canvas, c, origin, scale);
+  const render = (origin: Point, scale: Point) => {
+    c.clearRect(0, 0, canvas.width, canvas.height);
+    renderAxis(canvas, c, origin, scale);
 
-  const left = Math.round((0 - origin.x) / scale.x);
-  const right = Math.round((canvas.width - origin.x) / scale.x);
+    const left = Math.round((0 - origin.x) / scale.x);
+    const right = Math.round((canvas.width - origin.x) / scale.x);
 
-  const RADIUS = 4;
-  c.fillStyle = "#2c3e50";
-  for (let x = left; x < right; x++) {
-    c.beginPath();
-    const y = f(x);
-    const p = project(origin, scale, { x, y });
-    c.ellipse(p.x, p.y, RADIUS, RADIUS, 0, 0, 2 * Math.PI);
-    c.fill();
-  }
+    const RADIUS = 4;
+    c.fillStyle = "#2c3e50";
+    for (let x = left; x < right; x++) {
+      c.beginPath();
+      const y = f(x);
+      const p = project(origin, scale, { x, y });
+      c.ellipse(p.x, p.y, RADIUS, RADIUS, 0, 0, 2 * Math.PI);
+      c.fill();
+    }
+  };
+
+  registerOnMouseDrag(
+    canvas,
+    (shift: Point) => {
+      render(
+        {
+          x: origin.x + shift.x,
+          y: origin.y + shift.y,
+        },
+        scale
+      );
+    },
+    (shift: Point) => {
+      origin.x += shift.x;
+      origin.y += shift.y;
+      render(origin, scale);
+    }
+  );
+
+  render(origin, scale);
 }
 
 function assertIntegers(...nums: number[]) {
@@ -88,4 +116,35 @@ function renderAxis(
   for (let y = top; y < bottom; y++) {
     c.fillText(`${-y}`, origin.x - 4, origin.y + y * scale.y);
   }
+}
+
+function registerOnMouseDrag(
+  el: HTMLElement,
+  ondrag: (p: Point) => void,
+  ondone: (p: Point) => void
+) {
+  let pressdown: Point | null = null;
+  el.addEventListener("mousedown", (e) => {
+    pressdown = {
+      x: e.pageX,
+      y: e.pageY,
+    };
+  });
+  document.addEventListener("mousemove", (e) => {
+    if (pressdown !== null) {
+      ondrag({
+        x: e.pageX - pressdown.x,
+        y: e.pageY - pressdown.y,
+      });
+    }
+  });
+  document.addEventListener("mouseup", (e) => {
+    if (pressdown !== null) {
+      ondone({
+        x: e.pageX - pressdown.x,
+        y: e.pageY - pressdown.y,
+      });
+    }
+    pressdown = null;
+  });
 }
