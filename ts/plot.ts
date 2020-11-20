@@ -74,6 +74,7 @@ class Plot {
 
   render() {
     if (this.func === null) return;
+    const start = performance.now();
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this._renderAxis();
 
@@ -99,6 +100,14 @@ class Plot {
       );
       this.context.fill();
     }
+
+    this.context.textAlign = "right";
+    this.context.textBaseline = "bottom";
+    this.context.fillText(
+      performance.now() - start + " ms",
+      this.canvas.width,
+      this.canvas.height
+    );
   }
 
   _renderAxis() {
