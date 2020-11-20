@@ -108,12 +108,14 @@ class Plot {
       (this.canvas.width - this.origin.x) / this.scale.x
     );
     const top = Math.round((0 - this.origin.y) / this.scale.y);
-    const bottom = Math.round((this.canvas.height - this.origin.y) / 2);
+    const bottom = Math.round(
+      (this.canvas.height - this.origin.y) / this.scale.y
+    );
 
     this.context.font = "12px Roboto Mono";
     this.context.textAlign = "center";
 
-    for (let x = left; x < right; x++) {
+    for (let x = left; x <= right; x++) {
       this.context.fillText(
         `${x}`,
         this.origin.x + x * this.scale.x,
@@ -123,7 +125,7 @@ class Plot {
 
     this.context.textAlign = "right";
     this.context.textBaseline = "middle";
-    for (let y = top; y < bottom; y++) {
+    for (let y = top; y <= bottom; y++) {
       this.context.fillText(
         `${-y}`,
         this.origin.x - 4,
