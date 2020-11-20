@@ -1,6 +1,6 @@
 interface Formula {
   eval: (vars: { [key: string]: number }) => number;
-  requiredVariables: string[];
+  vars: string[];
 }
 
 enum TokenType {
@@ -69,7 +69,7 @@ function compileMathsExpression(expression: string): Formula {
       }
       return _eval(tree, vars);
     },
-    requiredVariables: variables,
+    vars: variables,
   };
 }
 

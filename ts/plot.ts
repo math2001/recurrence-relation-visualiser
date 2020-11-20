@@ -15,7 +15,7 @@ class Plot {
   scale: Point;
   origin: MPoint;
   context: CanvasRenderingContext2D;
-  func: ((x: number) => number) | null;
+  func: ((x: number) => number | null) | null;
   pressdown: Point | null;
 
   constructor(canvas: HTMLCanvasElement, unitaryOrigin: Point, scale: Point) {
@@ -75,6 +75,7 @@ class Plot {
     for (let x = left; x < right; x++) {
       this.context.beginPath();
       const y = this.func(x);
+      if (y === null) continue;
       this.context.ellipse(
         x * this.scale.x + this.origin.x,
         -y * this.scale.y + this.origin.y,

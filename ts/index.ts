@@ -28,24 +28,81 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // TODO: auto convert variables (a[n - 1] -> a[n-1])
+
+    validateUsedVariables(expr.vars);
+
     ensureEnoughICElementsAndUpdateIndexes(
       icBox,
       icElements,
       parseInt(icStartIndexInput.value),
-      expr.requiredVariables.length
+      expr.vars.length
     );
 
-    plot.func = (x: number): number => {
-      return 0 + x - x;
+    const startIndex = parseInt(icStartIndexInput.value);
+    const cache: number[] = [];
+    for (let i = 0; i < expr.vars.length; i++) {
+      cache[i] = parseInt(
+        getElement<HTMLInputElement>("input", icElements[i]).value
+      );
+    }
+
+    plot.func = (x: number): number | null => {
+      if (x < startIndex) return null;
+
+      const cacheIndex = x - startIndex;
+      for (let j = cache.length; j <= cacheIndex; j++) {
+        cache[cacheIndex] = expr.eval(
+          toObjOfVariables(cache, expr.vars.length)
+        );
+      }
+      return cache[cacheIndex];
     };
+
+    plot.render();
   };
 
   boxFormula.addEventListener("input", (e) => {
     updateDynamicElements();
   });
 
+  // set up fibonacci's sequence
+  // formulaInput.value = "a[n-1]+a[n-2]";
+  // updateDynamicElements();
+  // icElements.push(getElement<HTMLElement>("p", icBox));
+  // const next = icElements[icElements.length - 1].nextElementSibling;
+  // if (next === null || !(next instanceof HTMLElement)) throw new Error("wot?");
+  // icElements.push(next);
+  // getElement<HTMLInputElement>("input", next).value = "1";
   updateDynamicElements();
 });
+
+function validateUsedVariables(variables: string[]) {
+  for (let i = 0; i < variables.length; i++) {
+    if (variables[i].startsWith("a[n-") && variables[i].endsWith("]")) {
+      const index = parseInt(variables[i].slice("a[n-".length, -1), 10);
+      if (index > 0 && index <= variables.length) {
+        continue;
+      }
+    }
+    console.error(variables[i]);
+    throw new Error("invalid variable");
+  }
+}
+
+function toObjOfVariables(
+  allValues: number[],
+  numVariables: number
+): { [key: string]: number } {
+  assertIntegers(numVariables);
+
+  const obj: { [key: string]: number } = {};
+  for (let i = 0; i < numVariables; i++) {
+    obj[`a[n-${i + 1}]`] = allValues[allValues.length - 1 - i];
+  }
+
+  return obj;
+}
 
 function ensureEnoughICElementsAndUpdateIndexes(
   icBox: HTMLElement,
@@ -93,7 +150,7 @@ function ensureEnoughICElementsAndUpdateIndexes(
 
     const label = document.createElement("label");
     label.setAttribute("for", `ic-${i}`);
-    label.textContent = `a[${i + startIndex}]: `;
+    label.textContent = `a[${i + startIndex}] = `;
     row.appendChild(label);
 
     const input = document.createElement("input");
