@@ -13,3 +13,7 @@ input.formula {
   font-family: inherit;
   font-size: inherit;
 }
+
+canvas {
+  outline: 1px solid;
+}

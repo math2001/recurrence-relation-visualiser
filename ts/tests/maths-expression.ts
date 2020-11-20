@@ -18,6 +18,7 @@ function testMathsExpressionsNumbers() {
     }
   }
 }
+
 function testMathsExpressionsVariables() {
   let table: [string, { [key: string]: number }, number][] = [
     ["a+b", { a: 1, b: 2 }, 3],
