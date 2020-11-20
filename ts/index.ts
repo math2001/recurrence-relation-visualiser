@@ -32,28 +32,49 @@ document.addEventListener("DOMContentLoaded", () => {
 
     validateUsedVariables(expr.vars);
 
+    let includesN: boolean = false; // whether n is used in the expression
+    let degree: number = 0; // the number of previous variables the expression depends on
+    for (let v of expr.vars) {
+      if (v === "n") includesN = true;
+      else degree++;
+    }
+
     ensureEnoughICElementsAndUpdateIndexes(
       icBox,
       icElements,
       parseInt(icStartIndexInput.value),
-      expr.vars.size
+      degree
     );
 
     const startIndex = parseInt(icStartIndexInput.value);
     const cache: number[] = [];
-    for (let i = 0; i < expr.vars.size; i++) {
+    for (let i = 0; i < degree; i++) {
       cache[i] = parseInt(
         getElement<HTMLInputElement>("input", icElements[i]).value
       );
     }
 
     plot.func = (x: number): number | null => {
+      if (degree === 0) {
+        // only depend on n, or nothing
+        const vars: { [key: string]: number } = {};
+        if (includesN) {
+          vars["n"] = x - startIndex;
+        }
+        return expr.eval(vars);
+      }
       if (x < startIndex) return null;
 
       const cacheIndex = x - startIndex;
       for (let j = cache.length; j <= cacheIndex; j++) {
-        cache[cacheIndex] = expr.eval(toObjOfVariables(cache, expr.vars.size));
+        const vars = toObjOfVariables(cache, degree);
+        if (includesN) {
+          vars["n"] = cacheIndex;
+        }
+        cache[cacheIndex] = expr.eval(vars);
+        if (isNaN(cache[cacheIndex])) throw new Error("expr.eval returned NaN");
       }
+      if (cacheIndex >= cache.length) throw new Error("i can't do logic");
       return cache[cacheIndex];
     };
 
@@ -77,6 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function validateUsedVariables(variables: Set<string>) {
   for (let variable of variables) {
+    if (variable == "n") continue;
     if (variable.startsWith("a[n-") && variable.endsWith("]")) {
       const index = parseInt(variable.slice("a[n-".length, -1), 10);
       if (index > 0 && index <= variables.size) {

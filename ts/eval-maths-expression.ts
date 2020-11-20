@@ -70,6 +70,10 @@ function compileMathsExpression(expression: string): Formula {
         const index = foundVars.indexOf(name);
         if (index < 0) throw new Error(`Unknown variable ${name}`);
         foundVars.splice(index, 1);
+        if (typeof vars[name] !== "number" || isNaN(vars[name])) {
+          console.error(vars, name);
+          throw new Error("invalid variable value");
+        }
       }
       if (foundVars.length > 0) {
         console.error(foundVars);
