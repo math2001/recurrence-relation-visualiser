@@ -24,10 +24,14 @@ class Plot {
   func: ((x: number) => number | null) | null;
   pressdown: Point | null;
   measures: TextMetrics;
+  mouse: Point | null;
+
+  hoveredAxis: Axis | null;
 
   constructor(canvas: HTMLCanvasElement, unitaryOrigin: Point, zoom: MPoint) {
     this.func = null;
     this.pressdown = null;
+    this.mouse = null;
 
     this.canvas = canvas;
     const context = this.canvas.getContext("2d");
@@ -35,6 +39,7 @@ class Plot {
     this.context = context;
 
     this.measures = this.context.measureText("A");
+    this.hoveredAxis = null;
 
     this.zoom = zoom;
     this.scale = { x: 1, y: 1 };
@@ -50,6 +55,26 @@ class Plot {
         x: this.origin.x - e.pageX,
         y: this.origin.y - e.pageY,
       };
+    });
+
+    this.canvas.addEventListener("mousemove", (e) => {
+      this.mouse = {
+        x: e.offsetX,
+        y: e.offsetY,
+      };
+      this._checkHoveringAxis(e.shiftKey);
+    });
+
+    document.addEventListener("keydown", (e) => {
+      this._checkHoveringAxis(e.key == "Shift");
+    });
+    document.addEventListener("keyup", (e) => {
+      this._checkHoveringAxis(false);
+    });
+
+    this.canvas.addEventListener("mouseleave", () => {
+      this.mouse = null;
+      this._checkHoveringAxis(false);
     });
 
     document.addEventListener("mousemove", (e) => {
@@ -70,9 +95,9 @@ class Plot {
 
     this.canvas.addEventListener("wheel", (e) => {
       if (e.deltaY === 0) return;
-      if (e.shiftKey && this._highlightingAxis(e, Axis.vertical)) {
+      if (e.shiftKey && this._isHoveringAxis(Axis.vertical)) {
         this.zoom.y -= e.deltaY / Math.abs(e.deltaY);
-      } else if (e.shiftKey && this._highlightingAxis(e, Axis.horizontal)) {
+      } else if (e.shiftKey && this._isHoveringAxis(Axis.horizontal)) {
         this.zoom.x -= e.deltaY / Math.abs(e.deltaY);
       } else {
         this.zoom.y -= e.deltaY / Math.abs(e.deltaY);
@@ -122,17 +147,24 @@ class Plot {
   }
 
   _renderAxis() {
-    this.context.strokeStyle = "black";
-    this.context.beginPath();
+    const baseColor = "black";
+    const hoverColor = "red";
 
     // horizontal axis
+    this.context.beginPath();
+    this.context.strokeStyle =
+      this.hoveredAxis === Axis.horizontal ? hoverColor : baseColor;
+
     this.context.moveTo(0, this.origin.y);
     this.context.lineTo(this.canvas.width, this.origin.y);
+    this.context.stroke();
 
     // vertical axis
+    this.context.beginPath();
+    this.context.strokeStyle =
+      this.hoveredAxis === Axis.vertical ? hoverColor : baseColor;
     this.context.moveTo(this.origin.x, 0);
     this.context.lineTo(this.origin.x, this.canvas.height);
-
     this.context.stroke();
 
     const left = Math.round((0 - this.origin.x) / this.scale.x);
@@ -189,15 +221,33 @@ class Plot {
     this.scale.y = Math.pow(1.2, this.zoom.y);
   }
 
-  _highlightingAxis(e: MouseEvent, axis: Axis): boolean {
+  _isHoveringAxis(axis: Axis): boolean {
+    if (this.mouse === null) return false;
     const highlightingDistance = 20;
     if (axis === Axis.horizontal) {
-      return Math.abs(e.offsetY - this.origin.y) < highlightingDistance;
+      return Math.abs(this.mouse.y - this.origin.y) < highlightingDistance;
     }
     if (axis === Axis.vertical) {
-      return Math.abs(e.offsetX - this.origin.x) < highlightingDistance;
+      return Math.abs(this.mouse.x - this.origin.x) < highlightingDistance;
     }
     throw new Error("invalid axis");
+  }
+
+  _checkHoveringAxis(shiftKey: boolean) {
+    const prev = this.hoveredAxis;
+
+    if (shiftKey && this._isHoveringAxis(Axis.horizontal)) {
+      this.hoveredAxis = Axis.horizontal;
+    } else if (shiftKey && this._isHoveringAxis(Axis.vertical)) {
+      this.hoveredAxis = Axis.vertical;
+    } else {
+      this.hoveredAxis = null;
+    }
+
+    // console.log(this.hoveredAxis);
+    if (this.hoveredAxis !== prev) {
+      this.render();
+    }
   }
 }
 
